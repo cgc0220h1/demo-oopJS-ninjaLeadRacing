@@ -7,14 +7,16 @@ const DEFAULT_PLAYER_SPEED = 10;
 const DEFAULT_PLAYER_ORIENTATION = ORIENTATION_RIGHT;
 const DEFAULT_PLAYER_X = 100;
 const DEFAULT_PLAYER_Y = 20;
-const DEFAULT_PLAYER_W = 120;
-const DEFAULT_PLAYER_H = 120;
-const DEFAULT_ENEMY_W = 160;
-const DEFAULT_ENEMY_H = 160;
-const DEFAULT_PRIZE_W = 60;
-const DEFAULT_PRIZE_H = 60;
+const DEFAULT_PLAYER_W = 115;
+const DEFAULT_PLAYER_H = 115;
+const DEFAULT_ENEMY_W = 162;
+const DEFAULT_ENEMY_H = 124;
+const DEFAULT_PRIZE_W = 52;
+const DEFAULT_PRIZE_H = 52;
 const GAMEBOARD_X = 600;
 const GAMEBOARD_Y = 600;
+const GAMEBOARD_DEFAULT_SCORE = 0;
+const GAMEBOARD_POINT = 10;
 
 let Player = function (name) {
     this.name = name;
@@ -132,19 +134,26 @@ let Prize = function (name) {
 };
 
 let GameBoard = function () {
-    this.player = new Player("Player 1");
-    this.policeOne = new Enemy("Police 1");
-    this.policeTwo = new Enemy("Police 2");
-    this.coin = new Prize("Prize");
     this.canvas = document.getElementById('gameCanvas');
     this.context = this.canvas.getContext('2d');
+    this.score = GAMEBOARD_DEFAULT_SCORE;
+
+    this.showScore = function (id) {
+        document.getElementById(id).innerHTML = this.score;
+    };
 
     this.start = function () {
-        this.player.draw(this.context);
-        this.policeOne.draw(this.context);
-        this.policeTwo.draw(this.context);
-        this.coin.draw(this.context);
-        console.log(this.coin);
+        this.context.clearRect(0, 0, GAMEBOARD_X, GAMEBOARD_Y);
+        this.player = new Player("Player 1");
+        this.policeOne = new Enemy("Police 1");
+        this.policeTwo = new Enemy("Police 2");
+        this.coin = new Prize("Prize");
+        this.render(this.player);
+        this.render(this.policeOne);
+        this.render(this.policeTwo);
+        this.render(this.coin);
+        this.score = GAMEBOARD_DEFAULT_SCORE;
+        this.showScore("score");
     };
 
     this.removeFrame = function (object) {
@@ -197,11 +206,16 @@ let GameBoard = function () {
             this.removeFrame(this.player);
             this.player.turn(orientation);
             this.player.move();
-            this.render(this.player);
             let isCrashPoliceOne = this.checkCollision(this.player, this.policeOne);
             let isCrashPoliceTwo = this.checkCollision(this.player, this.policeTwo);
             let isCrashPrize = this.checkCollision(this.player, this.coin);
+            if (isCrashPoliceOne || isCrashPoliceTwo) {
+                alert("Tắt máy xuống xe em ei!");
+                return this.start();
+            }
             if (isCrashPrize) {
+                this.score += GAMEBOARD_POINT;
+                this.showScore("score");
                 this.removeFrame(this.coin);
                 this.coin = new Prize();
                 this.render(this.coin);
@@ -211,10 +225,11 @@ let GameBoard = function () {
                 this.removeFrame(this.policeTwo);
                 this.policeTwo = new Enemy();
                 this.render(this.policeTwo);
+                this.render(this.player);
             }
+            this.render(this.player);
         }
     };
 };
 
 let gameBoard = new GameBoard();
-gameBoard.start();

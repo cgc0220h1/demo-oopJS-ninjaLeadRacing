@@ -6,7 +6,9 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body onkeydown="gameBoard.movePlayer(event)">
-<h1 style="font-family: 'Open Sans', sans-serif">Ninja Lead đua xe</h1>
+<h2 style="font-family: 'Open Sans', sans-serif">Ninja Lead đua xe</h2>
+<button onclick="gameBoard.start()">Bắt đầu / Chơi lại</button><span>&nbsp;&nbsp;Điểm số: </span><span id="score"></span>
+<br><br>
 <canvas width="600px" height="600px" style="border: #111111 2px solid" id="gameCanvas"></canvas>
 <script src="js/app.js"></script>
 </body>
