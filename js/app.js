@@ -7,17 +7,17 @@ const DEFAULT_PLAYER_SPEED = 10;
 const DEFAULT_PLAYER_ORIENTATION = ORIENTATION_RIGHT;
 const DEFAULT_PLAYER_X = 100;
 const DEFAULT_PLAYER_Y = 20;
-const DEFAULT_PLAYER_W = 100;
-const DEFAULT_PLAYER_H = 100;
-const DEFAULT_ENEMY_W = 150;
-const DEFAULT_ENEMY_H = 150;
-const DEFAULT_PRIZE_W = 50;
-const DEFAULT_PRIZE_H = 50;
-const CALLIBRATE_COLLISION = 10;
-const GAMEBOARD_X = 900;
-const GAMEBOARD_Y = 500;
+const DEFAULT_PLAYER_W = 120;
+const DEFAULT_PLAYER_H = 120;
+const DEFAULT_ENEMY_W = 160;
+const DEFAULT_ENEMY_H = 160;
+const DEFAULT_PRIZE_W = 60;
+const DEFAULT_PRIZE_H = 60;
+const GAMEBOARD_X = 600;
+const GAMEBOARD_Y = 600;
 
-let Player = function () {
+let Player = function (name) {
+    this.name = name;
     this.xPosition = DEFAULT_PLAYER_X;
     this.yPosition = DEFAULT_PLAYER_Y;
     this.width = DEFAULT_PLAYER_W;
@@ -60,6 +60,10 @@ let Player = function () {
         this.speed += number;
     };
 
+    this.delete = function (context) {
+        context.clearRect(this.xPosition, this.yPosition, this.width, this.height);
+    };
+
     this.draw = function (context) {
         let image = this.getImage();
         let xPosition = this.xPosition;
@@ -70,15 +74,26 @@ let Player = function () {
     };
 };
 
-let Enemy = function () {
-    this.xPosition = Math.random() * GAMEBOARD_X;
-    this.yPosition = Math.random() * GAMEBOARD_Y;
+let Enemy = function (name) {
+    this.name = name;
+    this.xPosition = Math.floor(Math.random() * (GAMEBOARD_X - DEFAULT_ENEMY_W));
+    this.yPosition = Math.floor(Math.random() * (GAMEBOARD_Y - DEFAULT_ENEMY_H));
     this.width = DEFAULT_ENEMY_W;
     this.height = DEFAULT_ENEMY_H;
     this.image = "police.png";
 
-    this.draw = function (context) {
+    this.getImage = function () {
         let image = new Image(this.width, this.height);
+        image.src = "img/" + this.image;
+        return image;
+    };
+
+    this.delete = function (context) {
+        context.clearRect(this.xPosition, this.yPosition, this.width, this.height);
+    };
+
+    this.draw = function (context) {
+        let image = this.getImage();
         let xPosition = this.xPosition;
         let yPosition = this.yPosition;
         image.onload = function () {
@@ -88,62 +103,70 @@ let Enemy = function () {
     };
 };
 
-let Prize = function () {
-    this.xPosition = Math.random() * GAMEBOARD_X;
-    this.yPosition = Math.random() * GAMEBOARD_Y;
+let Prize = function (name) {
+    this.name = name;
+    this.xPosition = Math.floor(Math.random() * (GAMEBOARD_X - DEFAULT_PRIZE_W));
+    this.yPosition = Math.floor(Math.random() * (GAMEBOARD_Y - DEFAULT_PRIZE_H));
     this.width = DEFAULT_PRIZE_W;
     this.height = DEFAULT_PRIZE_H;
     this.image = "bitcoin.png";
 
-    this.draw = function (context) {
+    this.getImage = function () {
         let image = new Image(this.width, this.height);
+        image.src = "img/" + this.image;
+        return image;
+    };
+
+    this.delete = function (context) {
+        context.clearRect(this.xPosition, this.yPosition, this.width, this.height);
+    };
+
+    this.draw = function (context) {
+        let image = this.getImage();
         let xPosition = this.xPosition;
         let yPosition = this.yPosition;
         image.onload = function () {
             context.drawImage(image, xPosition, yPosition);
         };
-        image.src = "img/" + this.image;
     };
 };
 
 let GameBoard = function () {
-    this.player = new Player();
-    this.policeOne = new Enemy();
-    this.policeTwo = new Enemy();
-    this.prize = new Prize();
+    this.player = new Player("Player 1");
+    this.policeOne = new Enemy("Police 1");
+    this.policeTwo = new Enemy("Police 2");
+    this.coin = new Prize("Prize");
     this.canvas = document.getElementById('gameCanvas');
-    this.contextPlayerOne = this.canvas.getContext('2d');
-    this.contextPoliceOne = this.canvas.getContext('2d');
-    this.contextPoliceTwo = this.canvas.getContext('2d');
-    this.contextPrize = this.canvas.getContext('2d');
+    this.context = this.canvas.getContext('2d');
 
     this.start = function () {
-        this.player.draw(this.contextPlayerOne);
-        this.policeOne.draw(this.contextPoliceOne);
-        this.policeTwo.draw(this.contextPoliceTwo);
-        this.prize.draw(this.contextPrize);
+        this.player.draw(this.context);
+        this.policeOne.draw(this.context);
+        this.policeTwo.draw(this.context);
+        this.coin.draw(this.context);
+        console.log(this.coin);
     };
 
-    this.render = function () {
-        this.contextPlayerOne.clearRect(0, 0, GAMEBOARD_X, GAMEBOARD_Y);
-        this.player.draw(this.contextPlayerOne);
-        this.policeOne.draw(this.contextPoliceOne);
-        this.policeTwo.draw(this.contextPoliceTwo);
-        this.prize.draw(this.contextPrize);
+    this.removeFrame = function (object) {
+        object.delete(this.context);
+    };
+
+    this.render = function (object) {
+        object.draw(this.context);
     };
 
     this.checkCollision = function (object1, object2) {
-        if (object1.yPosition + object1.height >= object2.yPosition) {
-            if (object1.xPosition )
-            return true;
+        let distSubX = (object1.xPosition + object1.width / 2) - (object2.xPosition + object2.width / 2);
+        if (distSubX < 0) {
+            distSubX *= -1;
         }
-        if (object1.xPosition <= object2.xPosition + object2.width) {
-            return true;
+        let distSubY = (object1.yPosition + object1.height / 2) - (object2.yPosition + object2.height / 2);
+        if (distSubY < 0) {
+            distSubY *= -1;
         }
-        if (object1.yPosition <= object2.yPosition + object2.height) {
-            return true;
-        }
-        if (object1.xPosition + object1.width >= object2.xPosition) {
+        let distW = (object1.width + object2.width) / 2;
+        let distH = (object1.height + object2.height) / 2;
+        if (distSubX <= distW && distSubY <= distH) {
             return true;
         }
         return false;
@@ -171,15 +194,24 @@ let GameBoard = function () {
                 this.player.changeSpeed(-DEFAULT_PLAYER_SPEED);
         }
         if (orientation !== STAND_STILL) {
+            this.removeFrame(this.player);
             this.player.turn(orientation);
             this.player.move();
-            this.render();
-            let isCrash1 = this.checkCollision(this.player, this.policeOne);
-            let isCrash2 = this.checkCollision(this.player, this.policeTwo);
-            let isCrash3 = this.checkCollision(this.player, this.prize);
-            console.log(isCrash1);
-            console.log(isCrash2);
-            console.log(isCrash3);
+            this.render(this.player);
+            let isCrashPoliceOne = this.checkCollision(this.player, this.policeOne);
+            let isCrashPoliceTwo = this.checkCollision(this.player, this.policeTwo);
+            let isCrashPrize = this.checkCollision(this.player, this.coin);
+            if (isCrashPrize) {
+                this.removeFrame(this.coin);
+                this.coin = new Prize();
+                this.render(this.coin);
+                this.removeFrame(this.policeOne);
+                this.policeOne = new Enemy();
+                this.render(this.policeOne);
+                this.removeFrame(this.policeTwo);
+                this.policeTwo = new Enemy();
+                this.render(this.policeTwo);
+            }
         }
     };
 };
